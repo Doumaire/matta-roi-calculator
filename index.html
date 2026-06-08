@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matta ROI Calculator</title>
+<style>
+  :root {
+    --ink: #0f1722;
+    --muted: #5b6878;
+    --line: #e3e8ef;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --brand: #1456ff;
+    --brand-dark: #0d3bb0;
+    --good: #0f9d58;
+    --good-bg: #e9f7ef;
+    --warn: #c0392b;
+    --shade-input: #f4f7ff;
+    --shade-assume: #fbf6ed;
+    --shade-result: #eef6f0;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 28px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  header.app {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0 22px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand), #4f8bff);
+    color: #fff;
+    font-weight: 800;
+    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: -1px;
+  }
+  .brand h1 { font-size: 19px; margin: 0; letter-spacing: -.3px; }
+  .brand p { font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .12s;
+  }
+  .btn:hover { border-color: #c7cfdc; }
+  .btn-primary {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(20,86,255,.25);
+  }
+  .btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+  /* ---------- Layout ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px 20px;
+    margin-bottom: 22px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+  .card .sub { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+  .card.inputs { background: var(--shade-input); }
+  .card.assume { background: var(--shade-assume); }
+
+  .group-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--brand-dark);
+    margin: 16px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #d7deea;
+  }
+  .group-title:first-of-type { margin-top: 4px; }
+
+  .field {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+  }
+  .field label { font-size: 13.5px; }
+  .field label .agents {
+    display: inline-block;
+    font-size: 10.5px;
+    color: var(--brand);
+    background: #e8efff;
+    border-radius: 5px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .field label .opt { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .field .hint { font-size: 11.5px; color: var(--muted); display: block; margin-top: 1px; }
+
+  .input-cell { position: relative; display: flex; align-items: center; }
+  .input-cell .pre, .input-cell .post {
+    position: absolute; font-size: 12.5px; color: var(--muted); pointer-events: none;
+  }
+  .input-cell .pre { left: 10px; }
+  .input-cell .post { right: 10px; }
+
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cfd7e3;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    text-align: right;
+    transition: .12s;
+  }
+  input[type="text"]#companyName { text-align: left; }
+  input.has-pre { padding-left: 22px; }
+  input.has-post { padding-right: 26px; }
+  input:focus, select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(20,86,255,.12); }
+
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 150px 110px;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .meta-row .field { grid-template-columns: 1fr; padding: 0; }
+  .meta-row label { font-size: 11.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px; display:block; }
+
+  /* assumptions — given constants */
+  .given-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    color: #8a6d1f; background: #f3e4bd; border: 1px solid #e6d29a;
+    border-radius: 5px; padding: 1px 7px; margin-left: 8px; vertical-align: middle;
+  }
+  table.assume-table { width: 100%; border-collapse: collapse; }
+  table.assume-table td { padding: 9px 4px; border-bottom: 1px solid #efe6d2; font-size: 13.5px; }
+  table.assume-table tr:last-child td { border-bottom: none; }
+  table.assume-table .name { font-weight: 600; }
+  table.assume-table .agents {
+    font-size: 10.5px; color: var(--brand); background:#e8efff;
+    border-radius:5px; padding:1px 6px; margin-left:4px; font-weight:500; white-space: nowrap;
+  }
+  table.assume-table td.num { text-align: right; font-size: 16px; font-weight: 800; color: var(--brand-dark); width: 60px; }
+
+  /* ---------- Results ---------- */
+  .results-sticky { position: sticky; top: 16px; }
+
+  .headline {
+    background: linear-gradient(135deg, #0f1722, #1c2c45);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .headline .co { font-size: 13px; color: #9fb4d6; margin-bottom: 14px; font-weight: 600; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+  .kpi .k-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #9fb4d6; margin-bottom: 3px; }
+  .kpi .k-val { font-size: 26px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
+  .kpi .k-val.green { color: #5fe39a; }
+  .kpi .k-sub { font-size: 11.5px; color: #8fa3c4; margin-top: 1px; }
+
+  table.breakdown { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.breakdown th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.breakdown th.num, table.breakdown td.num { text-align: right; }
+  table.breakdown td { padding: 9px 8px; border-bottom: 1px solid #eef1f6; font-size: 14px; }
+  table.breakdown td .lever { font-weight: 600; }
+  table.breakdown td .agents { font-size: 11px; color: var(--muted); }
+  table.breakdown .bar-wrap { height: 6px; background: #eef1f6; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+  table.breakdown .bar { height: 100%; background: var(--brand); border-radius: 4px; }
+  table.breakdown tr.total td { font-weight: 800; border-top: 2px solid var(--ink); border-bottom: none; font-size: 15px; padding-top: 11px; }
+
+  .pricing-line { display:flex; justify-content: space-between; font-size: 13.5px; padding: 6px 8px; color: var(--muted); }
+  .pricing-line span.v { color: var(--ink); font-weight: 600; }
+
+  .summary-box {
+    background: var(--good-bg);
+    border: 1px solid #c6e8d3;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+  .summary-box h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing:.6px; color: var(--good); }
+  .summary-box strong { color: var(--ink); }
+
+  .warn-banner {
+    background: #fdecea; border: 1px solid #f3c6c0; color: var(--warn);
+    border-radius: 9px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none;
+  }
+  .warn-banner.show { display: block; }
+
+  .footnote { font-size: 11.5px; color: var(--muted); margin-top: 18px; line-height: 1.5; }
+
+  /* print meta only visible on PDF */
+  .print-only { display: none; }
+
+  /* ---------- PRINT / PDF ---------- */
+  @media print {
+    @page { size: A4 portrait; margin: 14mm 12mm; }
+    body { background: #fff; font-size: 11px; }
+    .wrap { max-width: none; padding: 0; }
+    .no-print { display: none !important; }
+    .print-only { display: block; }
+    .grid { display: block; }
+    .results-sticky { position: static; }
+    .card, .headline, .summary-box { break-inside: avoid; box-shadow: none; }
+    .card.inputs, .card.assume { background: #fff; border: 1px solid #d4dae3; }
+    .headline { background: #0f1722 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .kpi .k-val { font-size: 20px; }
+    .summary-box, table.breakdown .bar, .field label .agents,
+    table.assume-table .agents, .given-tag, .logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    input, select { border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; font-weight: 600; }
+    .input-cell .pre { position: static; }
+    header.app { border-bottom: 2px solid var(--ink); }
+    .pdf-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+
+    /* PDF client header */
+    .print-meta { text-align: right; }
+    .print-meta .pm-co { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -.2px; }
+    .print-meta .pm-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* PAGE 1 = inputs + assumptions, PAGE 2 = results + summary */
+    .results-sticky { break-before: page; page-break-before: always; }
+    .card.assume { break-inside: avoid; }
+
+    /* compact page 1 so inputs + assumptions both fit */
+    .card { padding: 11px 14px; margin-bottom: 11px; }
+    .card h2 { margin-bottom: 2px; }
+    .card .sub { margin-bottom: 7px; font-size: 10px; }
+    .group-title { margin: 8px 0 3px; padding-bottom: 2px; }
+    .field { padding: 2px 0; }
+    .field label { font-size: 11px; }
+    .field .hint { font-size: 9px; }
+    /* Matta assumptions — smaller on page 1 */
+    table.assume-table td { padding: 2.5px 4px; font-size: 10px; }
+    table.assume-table td.num { font-size: 11px; }
+    table.assume-table .agents { font-size: 8.5px; padding: 1px 4px; }
+    .given-tag { font-size: 8.5px; padding: 1px 5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HEADER ============ -->
+  <header class="app">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <h1>Matta ROI Calculator</h1>
+        <p class="no-print">Sentry · Gauge · Tally · Trace — value model for one production line</p>
+      </div>
+    </div>
+    <div class="header-actions no-print">
+      <button class="btn" onclick="resetAll()">Reset</button>
+      <button class="btn-primary btn" onclick="window.print()">⤓ Export PDF</button>
+    </div>
+    <div class="print-only print-meta">
+      <div class="pm-co" id="pm_company">—</div>
+      <div class="pm-sub" id="pm_sub"></div>
+    </div>
+  </header>
+
+  <!-- session meta -->
+  <div class="meta-row no-print">
+    <div class="field">
+      <label for="companyName">Company / Line name</label>
+      <input type="text" id="companyName" placeholder="e.g. Acme Motors — Line 3" oninput="recompute()" />
+    </div>
+    <div class="field">
+      <label for="currency">Currency</label>
+      <select id="currency" onchange="recompute()">
+        <option value="£">£ GBP</option>
+        <option value="$">$ USD</option>
+        <option value="€">€ EUR</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="number_of_lines"># Lines in scope</label>
+      <input type="number" id="number_of_lines" value="1" min="1" step="1" oninput="recompute()" />
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ LEFT: INPUTS + ASSUMPTIONS ============ -->
+    <div>
+      <div class="card inputs">
+        <h2>1 · Inputs</h2>
+        <p class="sub">Figures the plant / quality leader can estimate in the room. Per line.</p>
+
+        <div class="group-title">Production &amp; quality</div>
+        <div class="field">
+          <label for="annual_units">Annual production volume <span class="hint">units/year</span></label>
+          <div class="input-cell"><input type="number" id="annual_units" value="500000" min="0" step="1000" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="avg_unit_cost">Average cost to make one unit <span class="hint">materials + labour + overhead</span></label>
+          <div class="input-cell"><span class="pre cur-pre">£</span><input class="has-pre" type="number" id="avg_unit_cost" value="20" min="0" step="0.5" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="avg_selling_price">Average selling price per unit <span class="hint">what you sell one unit for</span></label>
+          <div class="input-cell"><span class="pre cur-pre">£</span><input class="has-pre" type="number" id="avg_selling_price" value="38" min="0" step="0.5" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="scrap_rate">Current scrap rate <span class="hint">a scrapped unit loses its full make-cost</span></label>
+          <div class="input-cell"><input class="has-post" type="number" id="scrap_rate" value="2.5" min="0" step="0.1" oninput="recompute()" /><span class="post">%</span></div>
+        </div>
+        <div class="field">
+          <label for="rework_rate">Current rework rate <span class="hint">rework assumed at 30% of make-cost</span></label>
+          <div class="input-cell"><input class="has-post" type="number" id="rework_rate" value="4" min="0" step="0.1" oninput="recompute()" /><span class="post">%</span></div>
+        </div>
+
+        <div class="group-title">Inspection &amp; labour</div>
+        <div class="field">
+          <label for="inspection_FTEs">FTEs on visual inspection / measurement</label>
+          <div class="input-cell"><input type="number" id="inspection_FTEs" value="4" min="0" step="0.5" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="cost_per_FTE">Fully loaded cost / FTE <span class="hint">per year</span></label>
+          <div class="input-cell"><span class="pre cur-pre">�</span><input class="has-pre" type="number" id="cost_per_FTE" value="55000" min="0" step="1000" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="pct_time_on_inspection">% of time spent on inspection</label>
+          <div class="input-cell"><input class="has-post" type="number" id="pct_time_on_inspection" value="70" min="0" max="100" step="1" oninput="recompute()" /><span class="post">%</span></div>
+        </div>
+
+        <div class="group-title">Warranty / returns</div>
+        <div class="field">
+          <label for="annual_warranty_cost">Annual quality warranty / returns / penalties <span class="hint">per line — if you only have a site-wide figure, divide by number of lines</span></label>
+          <div class="input-cell"><span class="pre cur-pre">�</span><input class="has-pre" type="number" id="annual_warranty_cost" value="250000" min="0" step="5000" oninput="recompute()" /></div>
+        </div>
+
+        <div class="group-title">Matta commercial terms</div>
+        <div class="field">
+          <label for="initial_investment">Initial investment <span class="hint">one-off deploy + integration + training (total scope)</span></label>
+          <div class="input-cell"><span class="pre cur-pre">�</span><input class="has-pre" type="number" id="initial_investment" value="120000" min="0" step="5000" oninput="recompute()" /></div>
+        </div>
+        <div class="field">
+          <label for="monthly_subscription_fee">Monthly subscription <span class="hint">per line</span></label>
+          <div class="input-cell"><span class="pre cur-pre">�</span><input class="has-pre" type="number" id="monthly_subscription_fee" value="6000" min="0" step="250" oninput="recompute()" /></div>
+        </div>
+      </div>
+
+      <div class="card assume">
+        <h2>2 · Matta impact assumptions <span class="given-tag">Given</span></h2>
+        <p class="sub">Fixed benchmark uplift for a typical Sentry + Gauge + Tally + Trace deployment. Applied to every calculation.</p>
+
+        <table class="assume-table">
+          <tbody>
+            <tr>
+              <td><span class="name">Scrap cost reduction</span> <span class="agents">Sentry + Gauge</span></td>
+              <td class="num">30%</td>
+            </tr>
+            <tr>
+              <td><span class="name">Rework cost reduction</span> <span class="agents">Sentry + Gauge</span></td>
+              <td class="num">30%</td>
+            </tr>
+            <tr>
+              <td><span class="name">Inspection time reduction</span> <span class="agents">Sentry + Gauge</span></td>
+              <td class="num">40%</td>
+            </tr>
+            <tr>
+              <td><span class="name">Throughput increase</span> <span class="agents">Tally</span></td>
+              <td class="num">3%</td>
+            </tr>
+            <tr>
+              <td><span class="name">Warranty / returns reduction</span> <span class="agents">Trace</span></td>
+              <td class="num">25%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ RIGHT: RESULTS ============ -->
+    <div>
+      <div class="results-sticky">
+        <div class="pdf-cols">
+        <div>
+        <div class="warn-banner" id="warnBanner"></div>
+
+        <div class="headline">
+          <div class="co" id="r_company">Your line</div>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="k-label">Total annual savings</div>
+              <div class="k-val green" id="r_total_savings">—</div>
+              <div class="k-sub" id="r_lines_note"></div>
+            </div>
+            <div class="kpi">
+              <div class="k-label">Annual net benefit</div>
+              <div class="k-val" id="r_net_benefit">—</div>
+              <div class="k-sub">after subscription</div>
+            </div>
+            <div class="kpi">
+              <div class="k-label">Payback period</div>
+              <div class="k-val" id="r_payback">—</div>
+              <div class="k-sub">to recover initial investment</div>
+            </div>
+            <div class="kpi">
+              <div class="k-label">3-year ROI</div>
+              <div class="k-val" id="r_roi">—</div>
+              <div class="k-sub">net of all fees</div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div>
+        <div class="card" style="margin-bottom:16px;">
+          <h2>Annual savings by lever</h2>
+          <table class="breakdown">
+            <thead>
+              <tr><th>Lever</th><th class="num">Annual value</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="lever">Scrap &amp; rework</span><br><span class="agents">Sentry + Gauge</span>
+                    <div class="bar-wrap"><div class="bar" id="bar_scrap"></div></div></td>
+                <td class="num" id="r_scrap">—</td>
+              </tr>
+              <tr>
+                <td><span class="lever">Inspection labour</span><br><span class="agents">Sentry + Gauge</span>
+                    <div class="bar-wrap"><div class="bar" id="bar_insp"></div></div></td>
+                <td class="num" id="r_insp">—</td>
+              </tr>
+              <tr>
+                <td><span class="lever">Throughput / OEE</span><br><span class="agents">Tally</span>
+                    <div class="bar-wrap"><div class="bar" id="bar_thru"></div></div></td>
+                <td class="num" id="r_thru">—</td>
+              </tr>
+              <tr>
+                <td><span class="lever">Warranty / returns</span><br><span class="agents">Trace</span>
+                    <div class="bar-wrap"><div class="bar" id="bar_warr"></div></div></td>
+                <td class="num" id="r_warr">—</td>
+              </tr>
+              <tr class="total">
+                <td>Total annual savings</td>
+                <td class="num" id="r_total_savings2">—</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
+            <div class="pricing-line">Annual subscription <span class="v" id="r_annual_sub">—</span></div>
+            <div class="pricing-line">Initial investment (one-off) <span class="v" id="r_initial">—</span></div>
+            <div class="pricing-line">Annual net benefit <span class="v" id="r_net_benefit2">—</span></div>
+          </div>
+        </div>
+        </div>
+        </div>
+
+        <div class="summary-box">
+          <h3>Client summary</h3>
+          <div id="r_summary">Enter your inputs to generate a summary.</div>
+        </div>
+
+        <p class="footnote">
+          <strong>Illustrative demo — figures are examples, not official Matta pricing.</strong>
+          Estimates only, based on client-provided inputs and Matta deployment assumptions shown above.
+          Model covers one representative line; multi-line scope scales benefits and subscription by the number of lines.
+          Initial investment is entered as the total for the scope. Not a contractual commitment.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const FIELDS_NUM = [
+    "annual_units","avg_unit_cost","scrap_rate","rework_rate",
+    "avg_selling_price","inspection_FTEs","cost_per_FTE",
+    "pct_time_on_inspection","annual_warranty_cost",
+    "initial_investment","monthly_subscription_fee","number_of_lines"
+  ];
+  const DEFAULTS = {};
+
+  function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+  function cur(){ return document.getElementById("currency").value; }
+  function fmtMoney(n){
+    const sign = n < 0 ? "-" : "";
+    return sign + cur() + Math.abs(Math.round(n)).toLocaleString("en-US");
+  }
+
+  // Matta impact assumptions — fixed benchmark constants (given, not user-editable)
+  const MATTA = {
+    scrap_cost_reduction:     0.30,
+    rework_cost_reduction:    0.30,
+    inspection_time_reduction:0.40,
+    throughput_increase:      0.03,
+    warranty_cost_reduction:  0.25
+  };
+
+  // Cost-modelling assumption (given): a reworked unit costs this share of its full make-cost
+  const REWORK_COST_SHARE = 0.30;
+
+  function recompute(){
+    // --- sync currency symbol on all money fields ---
+    document.querySelectorAll(".cur-pre").forEach(el => el.textContent = cur());
+
+    // --- inputs ---
+    const annual_units      = num("annual_units");
+    const scrap_rate        = num("scrap_rate")/100;
+    const rework_rate       = num("rework_rate")/100;
+    const avg_unit_cost     = num("avg_unit_cost");
+    // unit-cost proxy: a scrapped unit loses its full make-cost; rework costs a share of it
+    const cost_scrap        = avg_unit_cost;
+    const cost_rework       = avg_unit_cost * REWORK_COST_SHARE;
+    // throughput value per extra good unit = selling price − make-cost (conservative profit)
+    const avg_selling_price = num("avg_selling_price");
+    const cm                = Math.max(0, avg_selling_price - avg_unit_cost);
+    const ftes              = num("inspection_FTEs");
+    const cost_fte          = num("cost_per_FTE");
+    const pct_insp          = num("pct_time_on_inspection")/100;
+    // good units always derived from volume minus scrap (no separate input)
+    const good_units        = annual_units * (1 - scrap_rate);
+    const warranty          = num("annual_warranty_cost");
+    const initial           = num("initial_investment");
+    const monthly           = num("monthly_subscription_fee");
+    const lines             = Math.max(1, num("number_of_lines"));
+
+    // --- assumptions (given Matta constants) ---
+    const a_scrap   = MATTA.scrap_cost_reduction;
+    const a_rework  = MATTA.rework_cost_reduction;
+    const a_insp    = MATTA.inspection_time_reduction;
+    const a_thru    = MATTA.throughput_increase;
+    const a_warr    = MATTA.warranty_cost_reduction;
+
+    // --- lever formulas (per line) ---
+    const baseline_scrap_cost  = annual_units * scrap_rate  * cost_scrap;
+    const baseline_rework_cost = annual_units * rework_rate * cost_rework;
+    const savings_scrap_rework = baseline_scrap_cost*a_scrap + baseline_rework_cost*a_rework;
+
+    const baseline_inspection_cost = ftes * cost_fte * pct_insp;
+    const savings_inspection       = baseline_inspection_cost * a_insp;
+
+    const additional_good_units = good_units * a_thru;
+    const throughput_savings    = additional_good_units * cm;
+
+    const savings_warranty = warranty * a_warr;
+
+    const total_per_line = savings_scrap_rework + savings_inspection + throughput_savings + savings_warranty;
+
+    // --- scale to lines ---
+    const total_savings   = total_per_line * lines;
+    const annual_sub      = monthly * 12 * lines;
+    const net_benefit     = total_savings - annual_sub;
+    const roi3            = (3*net_benefit - initial) / (initial + 3*annual_sub);
+
+    // --- render KPIs ---
+    document.getElementById("r_total_savings").textContent  = fmtMoney(total_savings);
+    document.getElementById("r_total_savings2").textContent = fmtMoney(total_savings);
+    document.getElementById("r_net_benefit").textContent    = fmtMoney(net_benefit);
+    document.getElementById("r_net_benefit2").textContent   = fmtMoney(net_benefit);
+    document.getElementById("r_annual_sub").textContent     = fmtMoney(annual_sub);
+    document.getElementById("r_initial").textContent        = fmtMoney(initial);
+
+    // scaled lever values for the table
+    const sc = lines;
+    setLever("scrap", savings_scrap_rework*sc, total_savings);
+    setLever("insp",  savings_inspection*sc,  total_savings);
+    setLever("thru",  throughput_savings*sc,  total_savings);
+    setLever("warr",  savings_warranty*sc,    total_savings);
+
+    // payback + ROI guardrails
+    const warn = document.getElementById("warnBanner");
+    if (net_benefit <= 0) {
+      document.getElementById("r_payback").textContent = "No payback";
+      document.getElementById("r_roi").textContent = "—";
+      warn.className = "warn-banner show";
+      warn.textContent = "Annual savings do not cover the subscription at these inputs — adjust assumptions or scope.";
+    } else {
+      const payback_months = (initial / net_benefit) * 12;
+      document.getElementById("r_payback").textContent = payback_months.toFixed(1) + " mo";
+      document.getElementById("r_roi").textContent = Math.round(roi3*100) + "%";
+      warn.className = "warn-banner";
+    }
+
+    // --- company name / lines note ---
+    const co = document.getElementById("companyName").value.trim();
+    document.getElementById("r_company").textContent = co || "Your line";
+    document.getElementById("r_lines_note").textContent = lines > 1 ? ("across " + lines + " lines") : "";
+
+    // --- client summary text ---
+    buildSummary(co, total_savings, net_benefit, initial,
+                 {scrap:savings_scrap_rework, insp:savings_inspection, thru:throughput_savings, warr:savings_warranty});
+
+    // PDF header: client name + lines in scope + date
+    const dateStr = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+    const lineWord = lines > 1 ? (lines + " lines in scope") : "1 line in scope";
+    document.getElementById("pm_company").textContent = co || "Untitled line";
+    document.getElementById("pm_sub").textContent = lineWord + " · " + dateStr;
+  }
+
+  function setLever(key, value, total){
+    document.getElementById("r_"+key).textContent = fmtMoney(value);
+    const pct = total > 0 ? Math.max(2, (value/total)*100) : 0;
+    document.getElementById("bar_"+key).style.width = pct + "%";
+  }
+
+  const LEVER_NAMES = {
+    scrap:"scrap & rework reduction", insp:"inspection labour savings",
+    thru:"throughput gains", warr:"warranty & returns reduction"
+  };
+
+  function buildSummary(co, total, net, initial, levers){
+    const el = document.getElementById("r_summary");
+    if (total <= 0){ el.textContent = "Enter your inputs to generate a summary."; return; }
+    const ranked = Object.entries(levers).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0);
+    const top = ranked.slice(0,2).map(x=>LEVER_NAMES[x[0]]);
+    const topText = top.length === 2 ? (top[0] + " and " + top[1]) : (top[0] || "multiple levers");
+    const name = co || "This line";
+    let paybackTxt;
+    if (net <= 0){
+      paybackTxt = "does not pay back at the current inputs";
+    } else {
+      const m = (initial/net)*12;
+      const roi = Math.round(((3*net - initial)/(initial + 3*(total-net)))*100);
+      paybackTxt = "pays back its initial investment in <strong>" + m.toFixed(1) +
+                   " months</strong> and yields a <strong>" + roi + "% 3-year ROI</strong>";
+    }
+    el.innerHTML = "<strong>" + escapeHtml(name) + ":</strong> with these inputs, Matta delivers estimated annual savings of <strong>" +
+      fmtMoney(total) + "</strong>, " + paybackTxt + ". Most of the value comes from <strong>" + topText + "</strong>.";
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  function resetAll(){
+    FIELDS_NUM.forEach(id=>{ if(DEFAULTS[id]!==undefined) document.getElementById(id).value = DEFAULTS[id]; });
+    document.getElementById("companyName").value = "";
+    recompute();
+  }
+
+  // capture defaults, then first render
+  FIELDS_NUM.forEach(id=>{ DEFAULTS[id] = document.getElementById(id).value; });
+  recompute();
+</script>
+</body>
+</html>
