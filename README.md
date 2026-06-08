@@ -2,8 +2,7 @@
 
 A lightweight, single-file ROI calculator that quantifies the value of deploying Matta's industrial-AI agents — **Sentry, Gauge, Tally, Trace** — on a discrete-manufacturing line. Built to be used live in a sales or customer workshop and exported to a clean two-page PDF for the client to circulate internally.
 
-**▶️ Live demo:** `https://<your-username>.github.io/matta-roi-calculator/`
-*(replace with your URL once GitHub Pages is enabled)*
+**▶️ Live demo:** https://doumaire.github.io/matta-roi-calculator/
 
 > Illustrative demo. All figures are examples, not official Matta pricing or benchmarks.
 
@@ -11,24 +10,26 @@ A lightweight, single-file ROI calculator that quantifies the value of deploying
 
 ## Why I built this
 
-For an industrial-AI platform like Matta, the hardest part of the sale isn't the technology — it's getting a plant or quality leader to **put a number on the problem** Matta solves. A calculator that turns a 20-minute workshop conversation into a credible, one-page ROI case is exactly the kind of tool that shortens a B2B sales cycle.
+I'm applying to Matta as **Chief of Staff**, and rather than just describe how I think, I wanted to ship something a Matta operator could use on Monday morning.
 
-I built this to show how I'd approach that: tie the product's capabilities to the financial levers a factory actually cares about, keep the inputs to things a leader can answer from memory, and produce something they can forward to their CFO without me in the room.
+For an industrial-AI platform, the hardest part of the sale isn't the technology — it's getting a plant or quality leader to **put a number on the problem** Matta solves. A tool that turns a 20-minute workshop into a credible, CFO-ready ROI case is exactly the kind of small lever that compounds: it shortens the sales cycle, gives every account the same disciplined value story, and removes a recurring bottleneck from the go-to-market motion.
+
+That's the lens I'd bring to the role — finding where a bit of structure or tooling unlocks the team, then **building it end-to-end** instead of waiting for someone else to. To make this I taught myself Matta's product and value levers, made the judgment calls about what to model and what to deliberately leave out, and shipped a working, shareable artifact. It's a sample of how I operate, not a finished product.
 
 ## The four value levers
 
-The model maps Matta's agents to the four ways they move money on a discrete line:
+Matta frames its agents as "the first step towards factory sentience." The model maps those four agents to the four ways they move money on a discrete line:
 
 | Lever | Matta agents | What it captures |
 |---|---|---|
-| **Scrap & rework** | Sentry + Gauge | Inline defect/measurement catches reduce scrapped and reworked units |
-| **Inspection labour** | Sentry + Gauge | Vision replaces manual visual inspection / metrology effort |
-| **Throughput / OEE** | Tally | Exposing micro-stoppages and mis-kits recovers good output |
-| **Warranty / returns** | Trace | Traceability + digital route cards shrink quality escapes and claims |
+| **Scrap & rework** | Sentry + Gauge | **Sentry** detects known *and* unseen defects inline (down to 8-pixel micro-defects, no manual labelling); **Gauge** adds AI metrology at 100% inspection — fewer bad units escape, so less scrap and rework |
+| **Inspection labour** | Sentry + Gauge | Automated vision replaces manual visual inspection and CMM/metrology checks, freeing inspection FTEs |
+| **Throughput / OEE** | Tally | **Tally**'s automated counting and per-unit cycle timing give real-time throughput visibility, surfacing micro-stoppages and flow losses that recover good output |
+| **Warranty / returns** | Trace | **Trace** digitises route cards and links QC events to each serial/unique ID — stronger containment and traceability shrink quality escapes and claims |
 
-## Design decisions (the interesting part)
+## Judgment calls (the interesting part)
 
-Every simplification here was deliberate — the goal was a tool a salesperson can actually drive in a live conversation, not a finance-grade model.
+The hard part wasn't the maths — it was deciding what to leave out. A tool only gets used if a busy plant leader can fill it in live, so every simplification below is a deliberate trade of precision for adoption.
 
 - **≤ 13 inputs, all shop-floor-knowable.** A plant manager can answer every field from memory. I deliberately cut anything that needs a finance lookup.
 - **Scrap cost via a single "cost to make one unit."** Instead of asking for separate per-scrapped and per-reworked unit costs (numbers that live in finance and vary by part), the client gives *one* make-cost. A scrapped unit loses its full make-cost; a reworked unit is modelled at 30% of it. One easy number replaces two hard ones.
@@ -44,16 +45,18 @@ Every simplification here was deliberate — the goal was a tool a salesperson c
 - An **auto-written client summary** sentence naming the top one or two levers
 - A **two-page PDF** for internal sharing
 
-## How an SE would use it
+## How the team would use it
 
-1. Open the link on a call; fill in the client's volume, costs, scrap/rework, headcount, and warranty spend together.
+1. Open the link on a customer call; fill in the client's volume, costs, scrap/rework, headcount, and warranty spend together.
 2. Set the Matta commercial terms (initial investment + subscription) and number of lines.
 3. The ROI, payback, and summary update live as you talk.
-4. Export the PDF and send it — the client now has a quantified case to take to their CFO.
+4. Export the PDF and send it — the client walks away with a quantified case to take to their CFO.
+
+One link, no training, consistent value story across every rep — the kind of small operational asset a Chief of Staff ships to make a go-to-market motion repeatable.
 
 ## Tech
 
-A single, dependency-free `index.html` — HTML, CSS, and vanilla JavaScript. No build step, no server, works fully offline. Opens in any browser; deploys anywhere static.
+A single, dependency-free `index.html` — HTML, CSS, and vanilla JavaScript. No build step, no server, works fully offline. Opens in any browser; deploys anywhere static. Deliberately lightweight: the point was to ship something real and useful fast, not to over-engineer.
 
 ## The model, briefly
 
